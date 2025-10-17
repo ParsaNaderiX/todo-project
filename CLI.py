@@ -36,3 +36,28 @@ def display_add_task_menu():
     deadline = input()
     return name, description, status, deadline
 
+
+def display_edit_project_menu():
+    print("Enter new project name:")
+    new_name = input()
+    print("Enter new project description:")
+    new_description = input()
+    return new_name, new_description
+
+
+def display_edit_task_menu():
+    print("Enter new task name:")
+    new_name = input()
+    print("Enter new task description:")
+    new_description = input()
+    print("Enter new task status:")
+    new_status = input()
+    print("Enter new task deadline:")
+    new_deadline = input()
+    return new_name, new_description, new_status, new_deadline
+
+
+def display_edit_task_status_menu():
+    print("Enter new task status:")
+    new_status = input()
+    return new_status
