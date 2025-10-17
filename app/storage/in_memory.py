@@ -1,97 +1,179 @@
-from typing import List, Optional, Any
-from datetime import datetime, date
+"""In-memory storage implementation for the todo application."""
+from typing import List, Optional
+
 from app.config import MAX_NUMBER_OF_PROJECT, MAX_NUMBER_OF_TASK
+from app.core.models import Project, Task
+from app.core.exceptions import (
+    ProjectNotFoundError,
+    TaskNotFoundError,
+    ProjectLimitError,
+    TaskLimitError,
+)
+from app.core.validation import (
+    validate_project_name,
+    validate_project_description,
+    validate_unique_project_name,
+    validate_task_name,
+    validate_task_description,
+    validate_task_status,
+    validate_task_deadline,
+    validate_unique_task_name,
+)
 
 
 class InMemoryStorage:
-    def __init__(self):
-        self.projects: List[Any] = []
+    """Simple in-memory storage implementation."""
 
-    def add_project(self, project: Any) -> None:
-        if not getattr(project, "name", None) or str(project.name).strip() == "":
-            raise ValueError("Project name is required.")
-        name_word_count = len(str(project.name).strip().split())
-        desc_word_count = len(str(getattr(project, "description", "")).strip().split())
-        if name_word_count > 30:
-            raise ValueError("Project name must be <= 30 words.")
-        if desc_word_count > 150:
-            raise ValueError("Project description must be <= 150 words.")
-        if any(existing.name == project.name for existing in self.projects):
-            raise ValueError("Project name must be unique.")
+    def __init__(self):
+        """Initialize empty storage."""
+        self.projects: List[Project] = []
+
+    def add_project(self, project: Project) -> None:
+        """Add a new project to storage.
+        
+        Args:
+            project: The project to add
+            
+        Raises:
+            ValidationError: If project data is invalid
+            DuplicateProjectError: If project name exists
+            ProjectLimitError: If project limit reached
+        """
+        validate_project_name(project.name)
+        validate_project_description(project.description)
+        validate_unique_project_name(project.name, self.projects)
+        
         if len(self.projects) >= MAX_NUMBER_OF_PROJECT:
-            raise ValueError(f"Reached MAX_NUMBER_OF_PROJECT ({MAX_NUMBER_OF_PROJECT}); cannot add more projects.")
+            raise ProjectLimitError(
+                f"Cannot add more projects. Maximum allowed is {MAX_NUMBER_OF_PROJECT}."
+            )
+        
         self.projects.append(project)
 
-    def list_projects(self) -> List[Any]:
+    def list_projects(self) -> List[Project]:
+        """Get all projects.
+        
+        Returns:
+            List of all projects
+        """
         return list(self.projects)
 
-    def get_project(self, index: int) -> Optional[Any]:
+    def get_project(self, index: int) -> Optional[Project]:
+        """Get a project by index.
+        
+        Args:
+            index: Project index
+            
+        Returns:
+            The project if found, None otherwise
+        """
         if 0 <= index < len(self.projects):
             return self.projects[index]
         return None
 
     def delete_project(self, index: int) -> None:
+        """Delete a project.
+        
+        Args:
+            index: Project index
+            
+        Raises:
+            ProjectNotFoundError: If project doesn't exist
+        """
         project = self.get_project(index)
         if project is None:
-            raise IndexError("Project index out of range")
-        if hasattr(project, "tasks") and isinstance(project.tasks, list):
-            project.tasks.clear()
+            raise ProjectNotFoundError(f"Project with index {index} not found")
+        
+        project.tasks.clear()
         del self.projects[index]
 
-    def add_task(self, project_index: int, task: Any) -> None:
+    def add_task(self, project_index: int, task: Task) -> None:
+        """Add a task to a project.
+        
+        Args:
+            project_index: Project index
+            task: The task to add
+            
+        Raises:
+            ProjectNotFoundError: If project doesn't exist
+            ValidationError: If task data is invalid
+            DuplicateTaskError: If task name exists
+            TaskLimitError: If task limit reached
+        """
         project = self.get_project(project_index)
         if project is None:
-            raise IndexError("Project index out of range")
-        if not getattr(task, "name", None) or str(task.name).strip() == "":
-            raise ValueError("Task name is required.")
-        allowed_status = {"todo", "doing", "done"}
-        status_value = getattr(task, "status", None)
-        if status_value is None or str(status_value).strip() == "":
-            task.status = "todo"
-        else:
-            normalized = str(status_value).strip().lower()
-            if normalized not in allowed_status:
-                raise ValueError("Task status must be one of: todo, doing, done.")
-            task.status = normalized
-        deadline_value = getattr(task, "deadline", None)
-        if deadline_value is not None and str(deadline_value).strip() != "":
-            try:
-                parsed = datetime.strptime(str(deadline_value).strip(), "%Y-%m-%d").date()
-            except ValueError:
-                raise ValueError("Task deadline must be in YYYY-MM-DD format.")
-            if parsed < date.today():
-                raise ValueError("Task deadline cannot be in the past.")
-        name_word_count = len(str(task.name).strip().split())
-        desc_word_count = len(str(getattr(task, "description", "")).strip().split())
-        if name_word_count > 30:
-            raise ValueError("Task name must be <= 30 words.")
-        if desc_word_count > 150:
-            raise ValueError("Task description must be <= 150 words.")
-        if any(existing.name == task.name for existing in project.tasks):
-            raise ValueError("Task name must be unique within its project.")
+            raise ProjectNotFoundError(f"Project with index {project_index} not found")
+        
+        validate_task_name(task.name)
+        validate_task_description(task.description)
+        task.status = validate_task_status(task.status)
+        validate_task_deadline(task.deadline)
+        validate_unique_task_name(task.name, project.tasks)
+        
         if len(project.tasks) >= MAX_NUMBER_OF_TASK:
-            raise ValueError(f"Reached MAX_NUMBER_OF_TASK ({MAX_NUMBER_OF_TASK}); cannot add more tasks to this project.")
+            raise TaskLimitError(
+                f"Cannot add more tasks to this project. Maximum allowed is {MAX_NUMBER_OF_TASK}."
+            )
+        
         project.tasks.append(task)
 
-    def list_tasks(self, project_index: int) -> List[Any]:
+    def list_tasks(self, project_index: int) -> List[Task]:
+        """List all tasks in a project.
+        
+        Args:
+            project_index: Project index
+            
+        Returns:
+            List of tasks
+            
+        Raises:
+            ProjectNotFoundError: If project doesn't exist
+        """
         project = self.get_project(project_index)
         if project is None:
-            raise IndexError("Project index out of range")
+            raise ProjectNotFoundError(f"Project with index {project_index} not found")
+        
         return list(project.tasks)
 
-    def get_task(self, project_index: int, task_index: int) -> Optional[Any]:
+    def get_task(self, project_index: int, task_index: int) -> Optional[Task]:
+        """Get a task by indices.
+        
+        Args:
+            project_index: Project index
+            task_index: Task index
+            
+        Returns:
+            The task if found, None otherwise
+        """
         project = self.get_project(project_index)
         if project is None:
             return None
+        
         if 0 <= task_index < len(project.tasks):
             return project.tasks[task_index]
         return None
 
     def delete_task(self, project_index: int, task_index: int) -> None:
+        """Delete a task from a project.
+        
+        Args:
+            project_index: Project index
+            task_index: Task index
+            
+        Raises:
+            ProjectNotFoundError: If project doesn't exist
+            TaskNotFoundError: If task doesn't exist
+        """
         project = self.get_project(project_index)
         task = self.get_task(project_index, task_index)
-        if project is None or task is None:
-            raise IndexError("Task or project index out of range")
+        
+        if project is None:
+            raise ProjectNotFoundError(f"Project with index {project_index} not found")
+        if task is None:
+            raise TaskNotFoundError(
+                f"Task with index {task_index} not found in project {project_index}"
+            )
+        
         del project.tasks[task_index]
 
 
