@@ -7,8 +7,15 @@ class InMemoryStorage:
 
     # Project operations
     def add_project(self, project: Any) -> None:
+        # Validate non-empty name
+        if not getattr(project, "name", None) or str(project.name).strip() == "":
+            raise ValueError("Project name is required.")
+        # Validate uniqueness across projects
+        if any(existing.name == project.name for existing in self.projects):
+            raise ValueError("Project name must be unique.")
+        # Enforce cap
         if len(self.projects) >= MAX_NUMBER_OF_PROJECT:
-            raise ValueError("Reached MAX_NUMBER_OF_PROJECT; cannot add more projects.")
+            raise ValueError(f"Reached MAX_NUMBER_OF_PROJECT ({MAX_NUMBER_OF_PROJECT}); cannot add more projects.")
         self.projects.append(project)
 
     def list_projects(self) -> List[Any]:
@@ -30,8 +37,15 @@ class InMemoryStorage:
         project = self.get_project(project_index)
         if project is None:
             raise IndexError("Project index out of range")
+        # Validate non-empty name
+        if not getattr(task, "name", None) or str(task.name).strip() == "":
+            raise ValueError("Task name is required.")
+        # Validate uniqueness within the project
+        if any(existing.name == task.name for existing in project.tasks):
+            raise ValueError("Task name must be unique within its project.")
+        # Enforce cap per project
         if len(project.tasks) >= MAX_NUMBER_OF_TASK:
-            raise ValueError("Reached MAX_NUMBER_OF_TASK; cannot add more tasks to this project.")
+            raise ValueError(f"Reached MAX_NUMBER_OF_TASK ({MAX_NUMBER_OF_TASK}); cannot add more tasks to this project.")
         project.tasks.append(task)
 
     def list_tasks(self, project_index: int) -> List[Any]:
