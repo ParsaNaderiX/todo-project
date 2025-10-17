@@ -10,6 +10,13 @@ class InMemoryStorage:
         # Validate non-empty name
         if not getattr(project, "name", None) or str(project.name).strip() == "":
             raise ValueError("Project name is required.")
+        # Word limits: name <= 30 words, description <= 150 words
+        name_word_count = len(str(project.name).strip().split())
+        desc_word_count = len(str(getattr(project, "description", "")).strip().split())
+        if name_word_count > 30:
+            raise ValueError("Project name must be <= 30 words.")
+        if desc_word_count > 150:
+            raise ValueError("Project description must be <= 150 words.")
         # Validate uniqueness across projects
         if any(existing.name == project.name for existing in self.projects):
             raise ValueError("Project name must be unique.")
@@ -40,6 +47,13 @@ class InMemoryStorage:
         # Validate non-empty name
         if not getattr(task, "name", None) or str(task.name).strip() == "":
             raise ValueError("Task name is required.")
+        # Word limits: name <= 30 words, description <= 150 words
+        name_word_count = len(str(task.name).strip().split())
+        desc_word_count = len(str(getattr(task, "description", "")).strip().split())
+        if name_word_count > 30:
+            raise ValueError("Task name must be <= 30 words.")
+        if desc_word_count > 150:
+            raise ValueError("Task description must be <= 150 words.")
         # Validate uniqueness within the project
         if any(existing.name == task.name for existing in project.tasks):
             raise ValueError("Task name must be unique within its project.")
