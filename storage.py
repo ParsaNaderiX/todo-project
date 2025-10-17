@@ -9,7 +9,7 @@ class InMemoryStorage:
         self.projects.append(project)
 
     def list_projects(self) -> List[Any]:
-        return self.projects
+        return list(self.projects)
 
     def get_project(self, index: int) -> Optional[Any]:
         if 0 <= index < len(self.projects):
@@ -33,7 +33,7 @@ class InMemoryStorage:
         project = self.get_project(project_index)
         if project is None:
             raise IndexError("Project index out of range")
-        return project.tasks
+        return list(project.tasks)
 
     def get_task(self, project_index: int, task_index: int) -> Optional[Any]:
         project = self.get_project(project_index)
