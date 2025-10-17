@@ -7,9 +7,8 @@ class Project:
     def edit_project(self, new_name, new_description):
         self.name = new_name
         self.description = new_description
-
+    
     def delete_project(self):
-        # Deletion is managed by storage
         return
     
     def add_task(self, name, description, status, deadline):
@@ -18,7 +17,7 @@ class Project:
     
     def delete_task(self, task):
         self.tasks.remove(task)
-    
+
 
 class Task:
     def __init__(self, name, description, status, deadline, project):
@@ -36,3 +35,5 @@ class Task:
     
     def edit_task_status(self, new_status):
         self.status = new_status
+
+

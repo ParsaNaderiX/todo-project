@@ -21,12 +21,14 @@ def display_main_menu():
         except ValueError:
             print("Invalid input! Please enter a number from the options above.")
 
+
 def display_add_project_menu():
     print("Please enter the project name:")
     name = input()
     print("Please enter the project description:")
     description = input()
     return name, description
+
 
 def display_add_task_menu():
     print("Please enter the task name:")
@@ -64,3 +66,5 @@ def display_edit_task_status_menu():
     print("Enter new task status:")
     new_status = input()
     return new_status
+
+
