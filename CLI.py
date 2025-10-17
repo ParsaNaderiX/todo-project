@@ -1,5 +1,8 @@
-def display_main_menu():
+def display_welcome():
     print("Welcome to the To-Do List Application!")
+
+
+def display_main_menu():
     print("Please select an option:")
     print("1. Add a new project")
     print("2. Add a new task")
