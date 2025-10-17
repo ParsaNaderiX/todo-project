@@ -132,5 +132,35 @@ def main():
 
             project.delete_task(task)
 
+        elif main_menu_option == 8:
+            if not projects:
+                print("No projects to display.")
+                continue
+
+            print("All projects:")
+            for idx, p in enumerate(projects, 1):
+                print(f"{idx}. {p.name} - {p.description} | Tasks: {len(p.tasks)}")
+
+        elif main_menu_option == 9:
+            if not projects:
+                print("No projects exist yet. Please create a project first.")
+                continue
+
+            print("All tasks:")
+            has_any_task = False
+            for p in projects:
+                if not p.tasks:
+                    continue
+                print(f"Project: {p.name}")
+                for idx, t in enumerate(p.tasks, 1):
+                    has_any_task = True
+                    print(f"  {idx}. {t.name} - {t.description} | Status: {t.status} | Deadline: {t.deadline}")
+            if not has_any_task:
+                print("No tasks to display.")
+
+        elif main_menu_option == 10:
+            print("Exiting... See you!")
+            break
+
 if __name__ == "__main__":
     main()
