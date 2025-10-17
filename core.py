@@ -11,10 +11,11 @@ class Project:
         print(f"Project {self.name} edited successfully")
 
     def delete_project(self):
+        project_name = self.name
         self.name = None
         self.description = None
         self.tasks = None
-        print(f"Project {self.name} deleted successfully")
+        print(f"Project {project_name} deleted successfully")
     
     def add_task(self, name, description, status, deadline):
         task = Task(name, description, status, deadline, project=self)
