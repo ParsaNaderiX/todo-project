@@ -50,6 +50,16 @@ class InMemoryStorage:
         # Validate non-empty name
         if not getattr(task, "name", None) or str(task.name).strip() == "":
             raise ValueError("Task name is required.")
+        # Validate and normalize status: default to 'todo' if empty; must be one of {todo, doing, done}
+        allowed_status = {"todo", "doing", "done"}
+        status_value = getattr(task, "status", None)
+        if status_value is None or str(status_value).strip() == "":
+            task.status = "todo"
+        else:
+            normalized = str(status_value).strip().lower()
+            if normalized not in allowed_status:
+                raise ValueError("Task status must be one of: todo, doing, done.")
+            task.status = normalized
         # Optional deadline validation: if provided, must be YYYY-MM-DD and not in the past
         deadline_value = getattr(task, "deadline", None)
         if deadline_value is not None and str(deadline_value).strip() != "":

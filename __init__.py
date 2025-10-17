@@ -132,6 +132,12 @@ def main():
             if len(new_description.strip().split()) > 150:
                 print("Task description must be <= 150 words.")
                 continue
+            # Validate status allowed values if provided (defaulting is handled on add in storage)
+            if new_status and new_status.strip() != "":
+                normalized_status = new_status.strip().lower()
+                if normalized_status not in {"todo", "doing", "done"}:
+                    print("Task status must be one of: todo, doing, done.")
+                    continue
             # Optional deadline validation: if provided, must be YYYY-MM-DD and not in the past
             if new_deadline and new_deadline.strip() != "":
                 from datetime import datetime, date
