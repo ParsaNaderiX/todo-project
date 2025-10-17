@@ -1,5 +1,9 @@
+from config import MAX_NUMBER_OF_PROJECT, MAX_NUMBER_OF_TASK
+
 from storage import InMemoryStorage
+
 from core import Project, Task
+
 from CLI import (
     display_main_menu,
     display_add_project_menu,
@@ -9,7 +13,6 @@ from CLI import (
     display_edit_task_status_menu,
     display_welcome,
 )
-from config import MAX_NUMBER_OF_PROJECT, MAX_NUMBER_OF_TASK
 
 def _read_int(prompt: str) -> int:
     while True:
@@ -82,6 +85,13 @@ def main():
             if not new_name or new_name.strip() == "":
                 print("Project name is required.")
                 continue
+            # Word limits: name <= 30 words, description <= 150 words
+            if len(new_name.strip().split()) > 30:
+                print("Project name must be <= 30 words.")
+                continue
+            if len(new_description.strip().split()) > 150:
+                print("Project description must be <= 150 words.")
+                continue
             if any(p.name == new_name and i != project_index for i, p in enumerate(projects)):
                 print("Project name must be unique.")
                 continue
@@ -115,6 +125,30 @@ def main():
             if not new_name or new_name.strip() == "":
                 print("Task name is required.")
                 continue
+            # Word limits: name <= 30 words, description <= 150 words
+            if len(new_name.strip().split()) > 30:
+                print("Task name must be <= 30 words.")
+                continue
+            if len(new_description.strip().split()) > 150:
+                print("Task description must be <= 150 words.")
+                continue
+            # Validate status allowed values if provided (defaulting is handled on add in storage)
+            if new_status and new_status.strip() != "":
+                normalized_status = new_status.strip().lower()
+                if normalized_status not in {"todo", "doing", "done"}:
+                    print("Task status must be one of: todo, doing, done.")
+                    continue
+            # Optional deadline validation: if provided, must be YYYY-MM-DD and not in the past
+            if new_deadline and new_deadline.strip() != "":
+                from datetime import datetime, date
+                try:
+                    parsed = datetime.strptime(new_deadline.strip(), "%Y-%m-%d").date()
+                except ValueError:
+                    print("Task deadline must be in YYYY-MM-DD format.")
+                    continue
+                if parsed < date.today():
+                    print("Task deadline cannot be in the past.")
+                    continue
             if any(t.name == new_name and i != task_index for i, t in enumerate(tasks)):
                 print("Task name must be unique within its project.")
                 continue
