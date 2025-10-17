@@ -42,8 +42,9 @@ def main():
             try:
                 storage.add_project(project)
                 print(f"Project {project.name} created successfully")
-            except ValueError:
-                print(f"Cannot add more projects. Maximum allowed is {MAX_NUMBER_OF_PROJECT}.")
+            except ValueError as e:
+                message = str(e) if str(e) else f"Cannot add more projects. Maximum allowed is {MAX_NUMBER_OF_PROJECT}."
+                print(message)
 
         elif main_menu_option == 2:
             projects = storage.list_projects()
@@ -61,8 +62,9 @@ def main():
             try:
                 storage.add_task(project_index, task)
                 print(f"Task {task.name} added successfully to project {projects[project_index].name}")
-            except ValueError:
-                print(f"Cannot add more tasks to this project. Maximum allowed is {MAX_NUMBER_OF_TASK}.")
+            except ValueError as e:
+                message = str(e) if str(e) else f"Cannot add more tasks to this project. Maximum allowed is {MAX_NUMBER_OF_TASK}."
+                print(message)
 
         elif main_menu_option == 3:
             projects = storage.list_projects()
@@ -76,6 +78,13 @@ def main():
             project_index = _choose_index("Enter project number: ", len(projects))
 
             new_name, new_description = display_edit_project_menu()
+            # Validate non-empty and unique project name (excluding current project)
+            if not new_name or new_name.strip() == "":
+                print("Project name is required.")
+                continue
+            if any(p.name == new_name and i != project_index for i, p in enumerate(projects)):
+                print("Project name must be unique.")
+                continue
             project = projects[project_index]
             project.edit_project(new_name, new_description)
             print(f"Project {project.name} edited successfully")
@@ -102,6 +111,13 @@ def main():
             task_index = _choose_index("Enter task number: ", len(tasks))
 
             new_name, new_description, new_status, new_deadline = display_edit_task_menu()
+            # Validate non-empty and unique task name within project (excluding current task)
+            if not new_name or new_name.strip() == "":
+                print("Task name is required.")
+                continue
+            if any(t.name == new_name and i != task_index for i, t in enumerate(tasks)):
+                print("Task name must be unique within its project.")
+                continue
             task = tasks[task_index]
             task.edit_task(new_name, new_description, new_status, new_deadline)
             print(f"Task {task.name} edited successfully in project {projects[project_index].name}")
