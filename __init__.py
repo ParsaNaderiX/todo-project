@@ -95,5 +95,42 @@ def main():
             new_status = display_edit_task_status_menu()
             task.edit_task_status(new_status)
 
+        elif main_menu_option == 6:
+            if not projects:
+                print("No projects exist yet. Please create a project first.")
+                continue
+
+            print("Select a project to delete:")
+            for idx, p in enumerate(projects, 1):
+                print(f"{idx}. {p.name}")
+            project_index = int(input("Enter project number: ")) - 1
+            project = projects[project_index]
+
+            project.delete_project()
+            del projects[project_index]
+
+        elif main_menu_option == 7:
+            if not projects:
+                print("No projects exist yet. Please create a project first.")
+                continue
+
+            print("Select a project:")
+            for idx, p in enumerate(projects, 1):
+                print(f"{idx}. {p.name}")
+            project_index = int(input("Enter project number: ")) - 1
+            project = projects[project_index]
+
+            if not project.tasks:
+                print("No tasks exist in this project yet. Please add a task first.")
+                continue
+
+            print("Select a task to delete:")
+            for idx, t in enumerate(project.tasks, 1):
+                print(f"{idx}. {t.name}")
+            task_index = int(input("Enter task number: ")) - 1
+            task = project.tasks[task_index]
+
+            project.delete_task(task)
+
 if __name__ == "__main__":
     main()
