@@ -82,6 +82,13 @@ def main():
             if not new_name or new_name.strip() == "":
                 print("Project name is required.")
                 continue
+            # Word limits: name <= 30 words, description <= 150 words
+            if len(new_name.strip().split()) > 30:
+                print("Project name must be <= 30 words.")
+                continue
+            if len(new_description.strip().split()) > 150:
+                print("Project description must be <= 150 words.")
+                continue
             if any(p.name == new_name and i != project_index for i, p in enumerate(projects)):
                 print("Project name must be unique.")
                 continue
@@ -114,6 +121,13 @@ def main():
             # Validate non-empty and unique task name within project (excluding current task)
             if not new_name or new_name.strip() == "":
                 print("Task name is required.")
+                continue
+            # Word limits: name <= 30 words, description <= 150 words
+            if len(new_name.strip().split()) > 30:
+                print("Task name must be <= 30 words.")
+                continue
+            if len(new_description.strip().split()) > 150:
+                print("Task description must be <= 150 words.")
                 continue
             if any(t.name == new_name and i != task_index for i, t in enumerate(tasks)):
                 print("Task name must be unique within its project.")
