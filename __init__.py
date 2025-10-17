@@ -9,6 +9,7 @@ from CLI import (
     display_edit_task_status_menu,
     display_welcome,
 )
+from config import MAX_NUMBER_OF_PROJECT, MAX_NUMBER_OF_TASK
 
 def _read_int(prompt: str) -> int:
     while True:
@@ -38,8 +39,11 @@ def main():
         if main_menu_option == 1:
             name, description = display_add_project_menu()
             project = Project(name, description, [])
-            storage.add_project(project)
-            print(f"Project {project.name} created successfully")
+            try:
+                storage.add_project(project)
+                print(f"Project {project.name} created successfully")
+            except ValueError:
+                print(f"Cannot add more projects. Maximum allowed is {MAX_NUMBER_OF_PROJECT}.")
 
         elif main_menu_option == 2:
             projects = storage.list_projects()
@@ -54,8 +58,11 @@ def main():
 
             name, description, status, deadline = display_add_task_menu()
             task = Task(name, description, status, deadline, project=projects[project_index])
-            storage.add_task(project_index, task)
-            print(f"Task {task.name} added successfully to project {projects[project_index].name}")
+            try:
+                storage.add_task(project_index, task)
+                print(f"Task {task.name} added successfully to project {projects[project_index].name}")
+            except ValueError:
+                print(f"Cannot add more tasks to this project. Maximum allowed is {MAX_NUMBER_OF_TASK}.")
 
         elif main_menu_option == 3:
             projects = storage.list_projects()

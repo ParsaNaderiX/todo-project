@@ -1,4 +1,5 @@
 from typing import List, Optional, Any
+from config import MAX_NUMBER_OF_PROJECT, MAX_NUMBER_OF_TASK
 
 class InMemoryStorage:
     def __init__(self):
@@ -6,6 +7,8 @@ class InMemoryStorage:
 
     # Project operations
     def add_project(self, project: Any) -> None:
+        if len(self.projects) >= MAX_NUMBER_OF_PROJECT:
+            raise ValueError("Reached MAX_NUMBER_OF_PROJECT; cannot add more projects.")
         self.projects.append(project)
 
     def list_projects(self) -> List[Any]:
@@ -27,6 +30,8 @@ class InMemoryStorage:
         project = self.get_project(project_index)
         if project is None:
             raise IndexError("Project index out of range")
+        if len(project.tasks) >= MAX_NUMBER_OF_TASK:
+            raise ValueError("Reached MAX_NUMBER_OF_TASK; cannot add more tasks to this project.")
         project.tasks.append(task)
 
     def list_tasks(self, project_index: int) -> List[Any]:
