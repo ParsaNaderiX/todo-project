@@ -40,6 +40,9 @@ class InMemoryStorage:
         project = self.get_project(index)
         if project is None:
             raise IndexError("Project index out of range")
+        # Explicit cascade: remove all tasks of the project before deleting the project
+        if hasattr(project, "tasks") and isinstance(project.tasks, list):
+            project.tasks.clear()
         del self.projects[index]
 
     # Task operations
