@@ -1,4 +1,7 @@
 from typing import List, Optional, Any
+
+from datetime import datetime, date
+
 from config import MAX_NUMBER_OF_PROJECT, MAX_NUMBER_OF_TASK
 
 class InMemoryStorage:
@@ -47,6 +50,15 @@ class InMemoryStorage:
         # Validate non-empty name
         if not getattr(task, "name", None) or str(task.name).strip() == "":
             raise ValueError("Task name is required.")
+        # Optional deadline validation: if provided, must be YYYY-MM-DD and not in the past
+        deadline_value = getattr(task, "deadline", None)
+        if deadline_value is not None and str(deadline_value).strip() != "":
+            try:
+                parsed = datetime.strptime(str(deadline_value).strip(), "%Y-%m-%d").date()
+            except ValueError:
+                raise ValueError("Task deadline must be in YYYY-MM-DD format.")
+            if parsed < date.today():
+                raise ValueError("Task deadline cannot be in the past.")
         # Word limits: name <= 30 words, description <= 150 words
         name_word_count = len(str(task.name).strip().split())
         desc_word_count = len(str(getattr(task, "description", "")).strip().split())

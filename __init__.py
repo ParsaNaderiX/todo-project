@@ -1,5 +1,9 @@
+from config import MAX_NUMBER_OF_PROJECT, MAX_NUMBER_OF_TASK
+
 from storage import InMemoryStorage
+
 from core import Project, Task
+
 from CLI import (
     display_main_menu,
     display_add_project_menu,
@@ -9,7 +13,6 @@ from CLI import (
     display_edit_task_status_menu,
     display_welcome,
 )
-from config import MAX_NUMBER_OF_PROJECT, MAX_NUMBER_OF_TASK
 
 def _read_int(prompt: str) -> int:
     while True:
@@ -129,6 +132,17 @@ def main():
             if len(new_description.strip().split()) > 150:
                 print("Task description must be <= 150 words.")
                 continue
+            # Optional deadline validation: if provided, must be YYYY-MM-DD and not in the past
+            if new_deadline and new_deadline.strip() != "":
+                from datetime import datetime, date
+                try:
+                    parsed = datetime.strptime(new_deadline.strip(), "%Y-%m-%d").date()
+                except ValueError:
+                    print("Task deadline must be in YYYY-MM-DD format.")
+                    continue
+                if parsed < date.today():
+                    print("Task deadline cannot be in the past.")
+                    continue
             if any(t.name == new_name and i != task_index for i, t in enumerate(tasks)):
                 print("Task name must be unique within its project.")
                 continue
