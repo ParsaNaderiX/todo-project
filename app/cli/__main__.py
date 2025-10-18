@@ -1,6 +1,7 @@
-from app.config import MAX_NUMBER_OF_PROJECT, MAX_NUMBER_OF_TASK
+"""CLI entry point for the todo application."""
 from app.storage import InMemoryStorage
 from app.services import TodoService
+from app.cli.utils import handle_application_error, display_error, confirm_action
 from app.cli import (
     display_main_menu,
     display_add_project_menu,
@@ -39,12 +40,10 @@ def main():
 
         if main_menu_option == 1:
             name, description = display_add_project_menu()
-            try:
-                project = service.create_project(name, description)
+            project = handle_application_error(service.create_project, name, description)
+            if project is not None:
                 print(f"Project {project.name} created successfully")
-            except ValueError as e:
-                message = str(e) if str(e) else f"Cannot add more projects. Maximum allowed is {MAX_NUMBER_OF_PROJECT}."
-                print(message)
+            continue
 
         elif main_menu_option == 2:
             projects = service.list_projects()
@@ -58,12 +57,17 @@ def main():
             project_index = _choose_index("Enter project number: ", len(projects))
 
             name, description, status, deadline = display_add_task_menu()
-            try:
-                task = service.create_task(project_index, name, description, status, deadline)
+            task = handle_application_error(
+                service.create_task,
+                project_index,
+                name,
+                description,
+                status,
+                deadline
+            )
+            if task is not None:
                 print(f"Task {task.name} added successfully to project {projects[project_index].name}")
-            except ValueError as e:
-                message = str(e) if str(e) else f"Cannot add more tasks to this project. Maximum allowed is {MAX_NUMBER_OF_TASK}."
-                print(message)
+            continue
 
         elif main_menu_option == 3:
             projects = service.list_projects()
@@ -78,21 +82,15 @@ def main():
 
             new_name, new_description = display_edit_project_menu()
             # Validate non-empty and unique project name (excluding current project)
-            if not new_name or new_name.strip() == "":
-                print("Project name is required.")
-                continue
-            # Word limits: name <= 30 words, description <= 150 words
-            if len(new_name.strip().split()) > 30:
-                print("Project name must be <= 30 words.")
-                continue
-            if len(new_description.strip().split()) > 150:
-                print("Project description must be <= 150 words.")
-                continue
-            if any(p.name == new_name and i != project_index for i, p in enumerate(projects)):
-                print("Project name must be unique.")
-                continue
-            project = service.edit_project(project_index, new_name, new_description)
-            print(f"Project {project.name} edited successfully")
+            project = handle_application_error(
+                service.edit_project,
+                project_index,
+                new_name,
+                new_description
+            )
+            if project is not None:
+                print(f"Project {project.name} edited successfully")
+            continue
 
         elif main_menu_option == 4:
             projects = service.list_projects()
@@ -116,39 +114,18 @@ def main():
             task_index = _choose_index("Enter task number: ", len(tasks))
 
             new_name, new_description, new_status, new_deadline = display_edit_task_menu()
-            # Validate non-empty and unique task name within project (excluding current task)
-            if not new_name or new_name.strip() == "":
-                print("Task name is required.")
-                continue
-            # Word limits: name <= 30 words, description <= 150 words
-            if len(new_name.strip().split()) > 30:
-                print("Task name must be <= 30 words.")
-                continue
-            if len(new_description.strip().split()) > 150:
-                print("Task description must be <= 150 words.")
-                continue
-            # Validate status allowed values if provided (defaulting is handled on add in storage)
-            if new_status and new_status.strip() != "":
-                normalized_status = new_status.strip().lower()
-                if normalized_status not in {"todo", "doing", "done"}:
-                    print("Task status must be one of: todo, doing, done.")
-                    continue
-            # Optional deadline validation: if provided, must be YYYY-MM-DD and not in the past
-            if new_deadline and new_deadline.strip() != "":
-                from datetime import datetime, date
-                try:
-                    parsed = datetime.strptime(new_deadline.strip(), "%Y-%m-%d").date()
-                except ValueError:
-                    print("Task deadline must be in YYYY-MM-DD format.")
-                    continue
-                if parsed < date.today():
-                    print("Task deadline cannot be in the past.")
-                    continue
-            if any(t.name == new_name and i != task_index for i, t in enumerate(tasks)):
-                print("Task name must be unique within its project.")
-                continue
-            task = service.edit_task(project_index, task_index, new_name, new_description, new_status, new_deadline)
-            print(f"Task {task.name} edited successfully in project {projects[project_index].name}")
+            task = handle_application_error(
+                service.edit_task,
+                project_index,
+                task_index,
+                new_name,
+                new_description,
+                new_status,
+                new_deadline
+            )
+            if task is not None:
+                print(f"Task {task.name} edited successfully in project {projects[project_index].name}")
+            continue
 
         elif main_menu_option == 5:
             projects = service.list_projects()
@@ -172,8 +149,10 @@ def main():
             task_index = _choose_index("Enter task number: ", len(tasks))
 
             new_status = display_edit_task_status_menu()
-            task = service.edit_task_status(project_index, task_index, new_status)
-            print(f"Task {task.name} status edited successfully in project {projects[project_index].name}")
+            task = handle_application_error(service.edit_task_status, project_index, task_index, new_status)
+            if task is not None:
+                print(f"Task {task.name} status edited successfully in project {projects[project_index].name}")
+            continue
 
         elif main_menu_option == 6:
             projects = service.list_projects()
@@ -186,8 +165,11 @@ def main():
                 print(f"{idx}. {p.name}")
             project_index = _choose_index("Enter project number: ", len(projects))
             project = projects[project_index]
-            service.delete_project(project_index)
-            print(f"Project {project.name} deleted successfully")
+            
+            if confirm_action(f"Are you sure you want to delete project '{project.name}'? This will delete all its tasks"):
+                if handle_application_error(service.delete_project, project_index) is not None:
+                    print(f"Project {project.name} deleted successfully")
+            continue
 
         elif main_menu_option == 7:
             projects = service.list_projects()
@@ -211,8 +193,11 @@ def main():
             task_index = _choose_index("Enter task number: ", len(tasks))
             task = tasks[task_index]
             project = projects[project_index]
-            service.delete_task(project_index, task_index)
-            print(f"Task {task.name} deleted successfully from project {project.name}")
+            
+            if confirm_action(f"Are you sure you want to delete task '{task.name}' from project '{project.name}'?"):
+                if handle_application_error(service.delete_task, project_index, task_index) is not None:
+                    print(f"Task {task.name} deleted successfully from project {project.name}")
+            continue
 
         elif main_menu_option == 8:
             projects = service.list_projects()
@@ -247,4 +232,10 @@ def main():
             break
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nProgram interrupted by user. Exiting...")
+    except Exception as e:
+        display_error(f"Unexpected error occurred: {str(e)}")
+        print("The application will now exit.")
