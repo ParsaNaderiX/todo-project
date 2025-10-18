@@ -1,2 +1,357 @@
-# todo-project
-A semester-long Software Engineering project: a modular To-Do application developed in multiple phases, starting from a CLI version and expanding to database, API, and UI integration.
+# Todo Project - Phase 1: CLI Application
+
+A modular To-Do application built with clean architecture principles. This semester-long Software Engineering project demonstrates professional software development practices in Python.
+
+## Overview
+
+This is Phase 1 of a comprehensive To-Do application being developed throughout the semester as part of a Software Engineering course. The project will evolve from a command-line interface to a full-stack web application while maintaining clean architecture principles.
+
+### Project Phases
+
+All development phases will be tracked in this repository:
+
+- **Phase 1 (Current)**: CLI Application with In-Memory Storage
+- **Phase 2**: Database Integration
+- **Phase 3**: REST API
+- **Phase 4**: Web Interface
+
+## Current Features
+
+### Project Management
+- Create projects with names and descriptions
+- Edit existing project details
+- Delete projects (with cascade deletion of tasks)
+- View all projects with task counts
+- Unique project name validation
+- Configurable project limits (default: 10)
+
+### Task Management
+- Add tasks to projects with full details
+- Edit task information (name, description, status, deadline)
+- Quick status updates (TODO, DOING, DONE)
+- Delete individual tasks
+- View all tasks across all projects
+- Deadline validation (YYYY-MM-DD format)
+- Unique task names within projects
+
+### Validation & Error Handling
+- Comprehensive input validation
+- Word count limits (30 words for names, 150 for descriptions)
+- Date validation with past date prevention
+- Status validation (todo, doing, done)
+- User-friendly error messages
+- Graceful error handling with recovery
+- Confirmation prompts for destructive actions
+
+### Technical Highlights
+- Clean architecture with separation of concerns
+- Port/Adapter pattern for storage abstraction
+- Type hints throughout the codebase
+- Custom exception hierarchy
+- Environment-based configuration
+- Modular package structure
+- Extensible design for future phases
+
+## Architecture
+
+This project follows Clean Architecture principles with a clear separation between layers:
+
+```
+┌─────────────────────────────────────────┐
+│         CLI Layer (Presentation)        │
+│    - User interaction & display         │
+│    - Input handling & validation UI     │
+│    - Error display & confirmations      │
+└──────────────────┬──────────────────────┘
+                   │
+┌──────────────────▼──────────────────────┐
+│       Service Layer (Business Logic)    │
+│    - Core business operations           │
+│    - Validation orchestration           │
+│    - Exception handling                 │
+└──────────────────┬──────────────────────┘
+                   │
+┌──────────────────▼──────────────────────┐
+│      Storage Port (Abstract Interface)  │
+│    - Defines storage contract           │
+│    - Technology-agnostic                │
+└──────────────────┬──────────────────────┘
+                   │
+        ┌──────────┴──────────┐
+        │                     │
+┌───────▼────────┐   ┌────────▼──────────┐
+│   In-Memory    │   │    Database       │
+│    Storage     │   │    Storage        │
+│   (Phase 1)    │   │   (Phase 2)       │
+└────────────────┘   └───────────────────┘
+```
+
+### Architecture Benefits
+
+1. **Dependency Inversion**: High-level modules (service layer) don't depend on low-level modules (storage)
+2. **Testability**: Each layer can be tested independently
+3. **Maintainability**: Changes in one layer don't cascade to others
+4. **Extensibility**: New storage implementations can be added without touching business logic
+5. **Future-Proof**: Ready for database, API, and web UI without major refactoring
+
+## Installation
+
+### Prerequisites
+
+- Python 3.14+
+- pip or Poetry for dependency management
+- Git for version control
+
+### Setup Instructions
+
+1. Clone the repository
+   ```bash
+   git clone https://github.com/ParsaNaderiX/todo-project.git
+   cd todo-project
+   ```
+
+2. Set up virtual environment
+   ```bash
+   # Using venv
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   
+   # Or using Poetry
+   poetry install
+   poetry shell
+   ```
+
+3. Install dependencies
+   ```bash
+   # With pip
+   pip install python-dotenv
+   
+   # With Poetry
+   poetry add python-dotenv
+   ```
+
+4. Configure environment (optional)
+   ```bash
+   cp .example.env .env
+   # Edit .env to customize limits
+   ```
+
+### Configuration Options
+
+Create a `.env` file to customize application settings:
+
+```env
+# Maximum number of projects allowed
+MAX_NUMBER_OF_PROJECT=10
+
+# Maximum number of tasks per project
+MAX_NUMBER_OF_TASK=50
+```
+
+## Usage
+
+### Starting the Application
+
+```bash
+python -m app.cli
+```
+
+### Available Commands
+
+When you start the application, you'll see this menu:
+
+```
+Welcome to the To-Do List Application!
+Please select an option:
+1. Add a new project
+2. Add a new task
+3. Edit a project
+4. Edit a task
+5. Edit task status
+6. Delete a project
+7. Delete a task
+8. View all projects
+9. View all tasks
+10. Exit
+```
+
+### Validation Examples
+
+The application enforces strict validation:
+
+```
+Project name is required.
+Project name must be <= 30 words.
+Project name must be unique.
+Task status must be one of: todo, doing, done.
+Task deadline must be in YYYY-MM-DD format.
+Task deadline cannot be in the past.
+```
+
+## Project Structure
+
+```
+todo-project/
+├── app/
+│   ├── __init__.py
+│   │
+│   ├── cli/                      # Command-Line Interface Layer
+│   │   ├── __init__.py
+│   │   ├── __main__.py          # Main entry point with menu loop
+│   │   ├── menus.py             # User interaction & display functions
+│   │   └── utils.py             # Error handling & helper functions
+│   │
+│   ├── core/                     # Domain Layer (Business Models)
+│   │   ├── __init__.py
+│   │   ├── models.py            # Project & Task domain models
+│   │   ├── exceptions.py        # Custom exception hierarchy
+│   │   └── validation.py        # Validation logic & rules
+│   │
+│   ├── services/                 # Business Logic Layer
+│   │   ├── __init__.py
+│   │   └── todo_service.py      # Core business operations
+│   │
+│   ├── ports.py                  # Abstract Storage Interface
+│   │
+│   ├── storage/                  # Storage Implementations
+│   │   ├── __init__.py
+│   │   └── in_memory.py         # In-memory storage (Phase 1)
+│   │
+│   └── config/                   # Configuration Management
+│       ├── __init__.py
+│       └── settings.py          # Environment variables & defaults
+│
+├── .env                          # Environment configuration (not in repo)
+├── .example.env                 # Environment template
+├── .gitignore                   # Git ignore rules
+├── pyproject.toml               # Project metadata & dependencies
+└── README.md                    # This file
+```
+
+### Layer Responsibilities
+
+| Layer | Responsibility | Example |
+|-------|---------------|---------|
+| CLI | User interaction, display | Show menus, get input, display results |
+| Service | Business logic, validation | Create project, enforce limits, check uniqueness |
+| Core | Domain models, validation rules | Project/Task classes, validation functions |
+| Port | Abstract interface | StoragePort protocol definition |
+| Storage | Data persistence | In-memory list operations |
+| Config | Application settings | Load environment variables |
+
+## Design Principles
+
+### 1. Port/Adapter Pattern (Hexagonal Architecture)
+
+Isolate business logic from infrastructure concerns.
+
+```python
+# Abstract interface (Port)
+class StoragePort(Protocol):
+    def add_project(self, project: Project) -> None: ...
+
+# Current implementation (Adapter)
+class InMemoryStorage:
+    def add_project(self, project: Project) -> None:
+        self.projects.append(project)
+
+# Future implementation (Adapter)
+class DatabaseStorage:
+    def add_project(self, project: Project) -> None:
+        db.session.add(project)
+        db.session.commit()
+```
+
+The service layer code remains unchanged when swapping storage implementations.
+
+### 2. Separation of Concerns
+
+Each module has a single, well-defined responsibility:
+
+- **Models**: Define data structure and relationships
+- **Validation**: Enforce business rules
+- **Service**: Orchestrate operations
+- **Storage**: Persist data
+- **CLI**: Handle user interaction
+
+### 3. Validation Strategy
+
+Validation happens in the storage layer during operations to ensure data integrity:
+
+```python
+def add_project(self, project: Project) -> None:
+    validate_project_name(project.name)
+    validate_project_description(project.description)
+    validate_unique_project_name(project.name, self.projects)
+    # ... then add
+```
+
+Note: In future refactorings, validation may move to service layer for even better separation.
+
+### 4. Error Handling
+
+Custom exception hierarchy provides clear error semantics:
+
+```
+TodoError (base)
+├── ValidationError
+├── ProjectError
+│   ├── ProjectNotFoundError
+│   ├── DuplicateProjectError
+│   └── ProjectLimitError
+└── TaskError
+    ├── TaskNotFoundError
+    ├── DuplicateTaskError
+    └── TaskLimitError
+```
+
+The CLI layer catches these exceptions and displays user-friendly messages.
+
+### 5. Type Safety
+
+Comprehensive type hints throughout the codebase:
+
+```python
+def create_project(self, name: str, description: str) -> Project:
+    """Create a new project with validation."""
+
+def list_projects(self) -> List[Project]:
+    """Retrieve all projects."""
+```
+
+Benefits: IDE autocomplete, early error detection, self-documenting code.
+
+## Development Notes
+
+### Key Improvements Made
+
+Starting from a basic CLI application, the codebase was improved by:
+
+- Restructuring into clean architecture layers
+- Adding comprehensive error handling with user-friendly messages
+- Implementing confirmation prompts for destructive actions
+- Creating reusable utility functions for error handling
+- Adding docstrings throughout the codebase
+- Improving input validation and feedback
+- Setting up Poetry for dependency management
+
+### Challenges Addressed
+
+1. Understanding when to use protocols versus inheritance
+2. Deciding where validation logic should live
+3. Making errors helpful without cluttering the CLI
+4. Designing for future phases without over-engineering
+
+---
+
+## Version History
+
+- **v0.1.0** (Current) - Phase 1: CLI Application with In-Memory Storage
+  - Full CRUD operations for projects and tasks
+  - Comprehensive validation and error handling
+  - Clean architecture implementation
+  - User-friendly CLI with confirmations
+
+---
+
+This README will be updated as the project evolves through subsequent phases throughout the semester!
