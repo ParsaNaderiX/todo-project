@@ -1,40 +1,48 @@
-"""Custom exceptions for the todo application."""
+"""Custom exceptions for the todo application.
 
-class TodoError(Exception):
-    """Base exception for all todo application errors."""
+DEPRECATED: This module is maintained for backwards compatibility.
+New code should import from app.exceptions instead.
 
+This module re-exports all exceptions from app.exceptions to maintain
+backwards compatibility with existing code that imports from app.core.exceptions.
+"""
 
-class ValidationError(TodoError):
-    """Raised when input validation fails."""
+# Import all exceptions from the new location
+from app.exceptions import (
+    # Base exceptions
+    TodoError,
+    # Repository exceptions
+    RepositoryError,
+    DatabaseConnectionError,
+    DatabaseOperationError,
+    RecordNotFoundError,
+    # Service exceptions
+    ValidationError,
+    ProjectError,
+    ProjectNotFoundError,
+    DuplicateProjectError,
+    ProjectLimitError,
+    TaskError,
+    TaskNotFoundError,
+    DuplicateTaskError,
+    TaskLimitError,
+)
 
-
-class ProjectError(TodoError):
-    """Base class for project-related errors."""
-
-
-class TaskError(TodoError):
-    """Base class for task-related errors."""
-
-
-class ProjectNotFoundError(ProjectError):
-    """Raised when a project cannot be found."""
-
-
-class TaskNotFoundError(TaskError):
-    """Raised when a task cannot be found."""
-
-
-class DuplicateProjectError(ProjectError):
-    """Raised when trying to create a project with a name that already exists."""
-
-
-class DuplicateTaskError(TaskError):
-    """Raised when trying to create a task with a name that already exists in the project."""
-
-
-class ProjectLimitError(ProjectError):
-    """Raised when trying to create more projects than allowed."""
-
-
-class TaskLimitError(TaskError):
-    """Raised when trying to create more tasks than allowed in a project."""
+# Re-export for backwards compatibility
+__all__ = [
+    "TodoError",
+    "ValidationError",
+    "ProjectError",
+    "ProjectNotFoundError",
+    "DuplicateProjectError",
+    "ProjectLimitError",
+    "TaskError",
+    "TaskNotFoundError",
+    "DuplicateTaskError",
+    "TaskLimitError",
+    # New repository exceptions (also available for backwards compatibility)
+    "RepositoryError",
+    "DatabaseConnectionError",
+    "DatabaseOperationError",
+    "RecordNotFoundError",
+]
