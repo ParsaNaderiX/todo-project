@@ -93,29 +93,15 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        raise RuntimeError("DATABASE_URL environment variable is required.")
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
+    # Ensure Alembic uses the correct database URL
+    config.set_main_option("sqlalchemy.url", database_url)
 
-    Uses SQLAlchemy 2.0 compatible engine_from_config.
+    configuration = config.get_section(config.config_ini_section)
 
-    """
-    # Get database URL from config (set from environment variable above)
-    configuration = config.get_section(config.config_ini_section, {})
-    
-    # Ensure sqlalchemy.url is set
-    if "sqlalchemy.url" not in configuration:
-        database_url = os.getenv("DATABASE_URL")
-        if database_url:
-            configuration["sqlalchemy.url"] = database_url
-        else:
-            raise RuntimeError(
-                "DATABASE_URL environment variable is required. "
-                "Please set it in your .env file or environment."
-            )
-
-    # Create engine using SQLAlchemy 2.0 compatible configuration
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",
