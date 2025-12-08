@@ -1,3 +1,3 @@
-from .models import Project, Task
+from app.models import Project, Task
 
 

@@ -354,4 +354,95 @@ Starting from a basic CLI application, the codebase was improved by:
 
 ---
 
-This README will be updated as the project evolves through subsequent phases throughout the semester!
+## Phase 2: Database Integration
+
+This phase moves the application from an in-memory prototype to a durable,
+database-backed system using PostgreSQL. The goal is to provide reliable data
+persistence, improved scalability, and a clearer separation between business
+logic and infrastructure.
+
+### What's New in Phase 2
+- Migration from in-memory to PostgreSQL database
+- Implementation of Repository Pattern
+- Use of SQLAlchemy ORM for data modeling
+- Database migrations with Alembic
+- Docker containerization for PostgreSQL
+- Data persistence across application restarts
+
+### New Dependencies
+- `SQLAlchemy` 2.0+
+- `Alembic`
+- `psycopg2-binary`
+- `Docker` & `Docker Compose` (for running PostgreSQL locally)
+
+### Setup Instructions for Phase 2
+
+Prerequisites
+- Docker Desktop (or another Docker runtime)
+- Poetry (or an alternative Python dependency manager)
+
+Start PostgreSQL with Docker Compose
+```bash
+docker-compose up -d
+```
+
+Environment configuration
+- Copy the environment template and update the database URL and credentials:
+```bash
+cp .example.env .env
+# Edit .env to set DATABASE_URL (or ensure docker-compose sets matching vars)
+```
+
+Database initialization
+```bash
+poetry run alembic upgrade head
+```
+
+> Note: Ensure `DATABASE_URL` points to the running PostgreSQL instance. The
+> project provides a `docker-compose.yml` to start a local DB for development.
+
+### Updated Architecture Diagram
+
+The layered architecture is now explicit about the repository and database layers:
+
+```
+CLI Layer → Service Layer → Repository Layer → Database Layer
+```
+
+- CLI Layer: Handles user interaction, input, and presentation (unchanged).
+- Service Layer: Orchestrates business logic and validation; calls repositories.
+- Repository Layer: Encapsulates data access (SQLAlchemy + ORM mappings).
+- Database Layer: PostgreSQL instance managed via Docker / Docker Compose.
+
+Each layer has a single responsibility: the service layer calls repositories
+instead of directly manipulating storage, which improves testability and
+separation of concerns.
+
+### Database Operations
+- Run migrations:
+```bash
+poetry run alembic upgrade head
+```
+- Rollback (downgrade one migration):
+```bash
+poetry run alembic downgrade -1
+```
+- Access PostgreSQL directly (example using Docker Compose):
+```bash
+docker-compose exec db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+```
+- View database tables (inside `psql`):
+```sql
+\dt
+```
+
+### Migration from Phase 1
+- The storage implementation migrated from an in-memory adapter to a
+    repository-backed PostgreSQL implementation. Business logic now talks to
+    repositories instead of directly manipulating in-memory lists.
+- Data now persists across application restarts and is managed via Alembic
+    migrations.
+- The old `InMemoryStorage` implementation has been removed (or deprecated)
+    in favor of repository classes using SQLAlchemy sessions.
+
+---

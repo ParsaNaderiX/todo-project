@@ -3,7 +3,7 @@ from datetime import datetime, date
 from typing import List, Optional
 
 from app.core.exceptions import ValidationError, DuplicateProjectError, DuplicateTaskError
-from app.core.models import Project, Task
+from app.models import Project, Task
 
 
 def validate_project_name(name: str) -> None:

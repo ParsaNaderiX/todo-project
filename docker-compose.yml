@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: todo-postgres
+    environment:
+      POSTGRES_DB: todo_db
+      POSTGRES_USER: parsanaderi
+      POSTGRES_PASSWORD: parsanaderix2024
+    ports:
+      - "5432:5432"
+    volumes:
+      - todo-postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  todo-postgres-data:
+    driver: local
+
