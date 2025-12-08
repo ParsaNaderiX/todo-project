@@ -5,11 +5,13 @@ services:
     image: postgres:15
     container_name: todo-postgres
     environment:
-      POSTGRES_DB: todo_db
-      POSTGRES_USER: parsanaderi
-      POSTGRES_PASSWORD: parsanaderix2024
+      POSTGRES_DB: ${POSTGRES_DB:-todo_db}
+      POSTGRES_USER: ${POSTGRES_USER:-parsanaderi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # Bind to localhost to avoid exposing the DB externally by default.
+    
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - todo-postgres-data:/var/lib/postgresql/data
     restart: unless-stopped

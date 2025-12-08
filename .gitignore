@@ -1,7 +1,34 @@
 .env
+.env.*
 __pycache__/
+*.py[cod]
 *.pyc
 
 # Poetry
 poetry.lock
 .venv/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Python caches / test artifacts
+.pytest_cache/
+.mypy_cache/
+.cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Databases / local data
+*.sqlite
+*.db
+todo-postgres-data/
+
+# Build / packaging
+dist/
+build/
+node_modules/
