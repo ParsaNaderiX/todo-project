@@ -2,7 +2,7 @@
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -161,7 +161,7 @@ async def delete_project(
 ):
     try:
         service.delete_project(project_id)
-        return JSONResponse(status_code=status.HTTP_204_NO_CONTENT, content=None)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     except Exception as exc:  # noqa: BLE001
         return _error_response(exc)
 
@@ -294,6 +294,6 @@ async def delete_task(
 ):
     try:
         service.delete_task(project_id, task_id)
-        return JSONResponse(status_code=status.HTTP_204_NO_CONTENT, content=None)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     except Exception as exc:  # noqa: BLE001
         return _error_response(exc)
