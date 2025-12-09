@@ -1,5 +1,6 @@
 """CLI entry point for the todo application using repository-backed services."""
 from typing import List
+import sys
 
 from app.cli.utils import handle_application_error, display_error, confirm_action
 from app.cli import (
@@ -49,6 +50,11 @@ def _choose_id(prompt: str, valid_ids: List[int]) -> int:
 
 
 def main():
+    # Deprecation notice (visible but non-blocking)
+    print("\nWARNING: The CLI is deprecated and will be removed in the next version.", file=sys.stderr)
+    print("Please use the new REST API instead: http://localhost:8000", file=sys.stderr)
+    print("API documentation: http://localhost:8000/docs\n", file=sys.stderr)
+
     # Obtain a DB session from the generator
     db = next(get_db())
 
@@ -57,8 +63,8 @@ def main():
         project_repo = ProjectRepository(db)
         task_repo = TaskRepository(db)
 
-        project_service = ProjectService(project_repo)
-        task_service = TaskService(task_repo)
+        project_service = ProjectService(project_repo, task_repo)
+        task_service = TaskService(project_repo, task_repo)
 
         display_welcome()
 

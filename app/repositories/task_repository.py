@@ -1,34 +1,25 @@
 """Repository for Task entity database operations.
 
 Implements the Repository Pattern for Task entity using SQLAlchemy 2.0 style
-queries (`select` / `session.execute` / `session.scalar`) and provides
-validation, error handling and convenient data access methods used by services
-and CLI code.
+queries (`select` / `session.execute` / `session.scalar`). Business validation
+is expected to live in the service layer; this repository focuses on data
+access and database error translation.
 """
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from typing import List, Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from app.config import MAX_NUMBER_OF_TASK
-from app.core.validation import (
-    validate_task_deadline,
-    validate_task_description,
-    validate_task_name,
-    validate_task_status,
-)
 from app.exceptions import (
     DatabaseOperationError,
     DuplicateTaskError,
     ProjectNotFoundError,
-    TaskLimitError,
     TaskNotFoundError,
-    ValidationError,
 )
 from app.models.project import Project
 from app.models.task import Task
@@ -37,12 +28,9 @@ from app.models.task import Task
 class TaskRepository:
     """Repository for Task entity database operations.
 
-    This class encapsulates all DB access related to tasks. It validates input
-    using centralized validators, enforces business rules (task limits,
-    uniqueness), and maps SQLAlchemy exceptions to application exceptions.
-
-    Attributes:
-        db: SQLAlchemy `Session` instance injected by caller.
+    This class encapsulates all DB access related to tasks and maps SQLAlchemy
+    exceptions to application-specific exceptions. Business rules and validation
+    are handled by the service layer.
     """
 
     def __init__(self, db: Session) -> None:
@@ -59,33 +47,20 @@ class TaskRepository:
         name: str,
         description: str,
         status: str,
-        deadline: Optional[str],
+        deadline: Optional[date],
     ) -> Task:
         """Create and persist a new Task in the given project.
-
-        Steps:
-        - Verify project exists.
-        - Validate task fields using validators in `app.core.validation`.
-        - Enforce task count limit per project (raises `TaskLimitError`).
-        - Ensure task name is unique within project (raises `DuplicateTaskError`).
-        - Insert, commit and return the created `Task` model.
 
         Args:
             project_id: ID of the owning project.
             name: Task name.
             description: Task description.
-            status: Task status string (will be normalized by validator).
-            deadline: Optional deadline string in `YYYY-MM-DD` format.
+            status: Normalized task status string.
+            deadline: Optional deadline value parsed by the service layer.
 
         Returns:
             The created `Task` ORM instance.
 
-        Raises:
-            ValidationError: If validation fails.
-            ProjectNotFoundError: If the project does not exist.
-            TaskLimitError: If project has reached `MAX_NUMBER_OF_TASK`.
-            DuplicateTaskError: If a task with the same name already exists in project.
-            DatabaseOperationError: For unexpected DB errors.
         """
         # Verify project exists
         try:
@@ -97,37 +72,12 @@ class TaskRepository:
         if project is None:
             raise ProjectNotFoundError(f"Project with ID {project_id} not found.")
 
-        # Validate inputs
-        validate_task_name(name)
-        validate_task_description(description)
-        normalized_status = validate_task_status(status)
-        validate_task_deadline(deadline)
-
-        # Enforce task limit
-        try:
-            count_stmt = select(func.count(Task.id)).where(Task.project_id == project_id)
-            task_count = self.db.scalar(count_stmt) or 0
-        except Exception as e:
-            raise DatabaseOperationError(f"Failed to count tasks for project: {e}") from e
-
-        if task_count >= MAX_NUMBER_OF_TASK:
-            raise TaskLimitError(f"Cannot create more than {MAX_NUMBER_OF_TASK} tasks in project {project_id}.")
-
-        # Uniqueness check
-        if self.exists_by_name_in_project(project_id, name):
-            raise DuplicateTaskError(f"Task '{name}' already exists in project {project_id}.")
-
-        # Parse deadline into date if provided
-        parsed_deadline: Optional[date] = None
-        if deadline is not None and str(deadline).strip():
-            parsed_deadline = datetime.strptime(str(deadline).strip(), "%Y-%m-%d").date()
-
         task = Task(
             project_id=project_id,
             name=name,
             description=description,
-            status=normalized_status,
-            deadline=parsed_deadline,
+            status=status,
+            deadline=deadline,
         )
 
         try:
@@ -196,13 +146,11 @@ class TaskRepository:
         name: str,
         description: str,
         status: str,
-        deadline: Optional[str],
+        deadline: Optional[date],
     ) -> Task:
         """Update an existing task by ID.
 
-        Validates inputs and enforces uniqueness within the owning project
-        (excluding the current task). Raises `TaskNotFoundError` if the task
-        doesn't exist.
+        Assumes validation and business rules are handled in the service layer.
         """
         # Fetch task
         try:
@@ -214,26 +162,11 @@ class TaskRepository:
         if task is None:
             raise TaskNotFoundError(f"Task with ID {task_id} not found.")
 
-        # Validate inputs
-        validate_task_name(name)
-        validate_task_description(description)
-        normalized_status = validate_task_status(status)
-        validate_task_deadline(deadline)
-
-        # Uniqueness check within project (exclude current task)
-        if self.exists_by_name_in_project(task.project_id, name, exclude_id=task_id):
-            raise DuplicateTaskError(f"Task '{name}' already exists in project {task.project_id}.")
-
-        # Parse deadline
-        parsed_deadline: Optional[date] = None
-        if deadline is not None and str(deadline).strip():
-            parsed_deadline = datetime.strptime(str(deadline).strip(), "%Y-%m-%d").date()
-
         # Apply updates
         task.name = name
         task.description = description
-        task.status = normalized_status
-        task.deadline = parsed_deadline
+        task.status = status
+        task.deadline = deadline
 
         try:
             self.db.commit()
@@ -251,8 +184,8 @@ class TaskRepository:
     def update_status(self, task_id: int, status: str) -> Task:
         """Update only the `status` field of a task.
 
-        Validates status using the central validator. Raises `TaskNotFoundError`
-        when the task does not exist.
+        Assumes status validation is handled by the service layer. Raises
+        `TaskNotFoundError` when the task does not exist.
         """
         try:
             stmt = select(Task).where(Task.id == task_id)
@@ -263,8 +196,7 @@ class TaskRepository:
         if task is None:
             raise TaskNotFoundError(f"Task with ID {task_id} not found.")
 
-        normalized_status = validate_task_status(status)
-        task.status = normalized_status
+        task.status = status
 
         try:
             self.db.commit()
@@ -330,3 +262,11 @@ class TaskRepository:
             return list(result.all())
         except Exception as e:
             raise DatabaseOperationError(f"Failed to fetch overdue tasks: {e}") from e
+
+    def count_by_project(self, project_id: int) -> int:
+        """Return the number of tasks for the given project."""
+        try:
+            stmt = select(func.count(Task.id)).where(Task.project_id == project_id)
+            return int(self.db.scalar(stmt) or 0)
+        except Exception as e:
+            raise DatabaseOperationError(f"Failed to count tasks for project {project_id}: {e}") from e
