@@ -10,22 +10,22 @@ Note: install `schedule` in your environment: `poetry add schedule` or
 """
 import time
 import schedule
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.commands.autoclose_overdue import autoclose_overdue_tasks
 
 
 def _log(msg: str) -> None:
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     print(f"[{now}] {msg}")
 
 
 def main() -> None:
     _log("Starting task scheduler...")
-    _log("Auto-close overdue tasks will run every 15 minutes")
+    _log("Auto-close overdue tasks will run every 1 minute.")
 
-    # Schedule the task every 15 minutes
-    schedule.every(15).minutes.do(lambda: _run_job(autoclose_overdue_tasks))
+    # Schedule the task every 1 minute
+    schedule.every(1).minutes.do(lambda: _run_job(autoclose_overdue_tasks))
 
     try:
         while True:

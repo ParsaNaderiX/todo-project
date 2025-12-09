@@ -42,12 +42,6 @@ def _get_required_env(var_name: str) -> str:
     """Retrieve required environment variable or raise a clear error."""
     value = os.getenv(var_name)
     if value is None or value.strip() == "":
-        # For development and import-time safety, provide a sensible default
-        # for the database URL so modules can be imported without requiring
-        # environment setup. Production deployments should set
-        # `DATABASE_URL` explicitly.
-        if var_name == "DATABASE_URL":
-            return "sqlite:///./dev.db"
         raise RuntimeError(f"Missing required environment variable: {var_name}")
     return value
 

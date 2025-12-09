@@ -7,7 +7,7 @@ This command will mark tasks whose deadline is before today and are not
 already marked as `done` as `done`, set their `closed_at` timestamp, and
 persist the changes.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 from app.db.session import get_db
@@ -43,7 +43,7 @@ def autoclose_overdue_tasks() -> None:
             try:
                 # Update in-memory ORM object
                 task.status = "done"
-                task.closed_at = datetime.utcnow()
+                task.closed_at = datetime.now(timezone.utc)
 
                 # Persist changes
                 db.add(task)
