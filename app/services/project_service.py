@@ -1,70 +1,34 @@
-"""Service layer for project-related operations using repositories.
-
-This module provides a thin service that orchestrates calls to the
-`ProjectRepository`. All validation and database concerns live in the
-repository; the service only delegates and translates repository `None`
-responses into service-level `ProjectNotFoundError` where appropriate.
-"""
+"""Project service wrapper that delegates to the unified TodoService."""
 
 from typing import List
 
-from app.repositories import ProjectRepository
 from app.models.project import Project
-from app.exceptions import ProjectNotFoundError
+from app.repositories import ProjectRepository, TaskRepository
+from app.services.todo_service import TodoService
 
 
 class ProjectService:
-    """Service for project operations backed by `ProjectRepository`.
+    """Project-focused façade over the core TodoService."""
 
-    The service is intentionally thin — it delegates to the repository for
-    validation and persistence. It translates repository `None` results into
-    `ProjectNotFoundError` where a not-found semantic is expected by callers.
-    """
-
-    def __init__(self, project_repository: ProjectRepository) -> None:
-        """Initialize the service with a `ProjectRepository`.
-
-        Args:
-            project_repository: Repository handling project DB operations.
-        """
-        self.project_repository = project_repository
+    def __init__(self, project_repository: ProjectRepository, task_repository: TaskRepository) -> None:
+        self._service = TodoService(project_repository, task_repository)
 
     def create_project(self, name: str, description: str) -> Project:
-        """Create a new project.
-
-        Delegates to `ProjectRepository.create()` and returns the created
-        `Project` instance. Repository exceptions are allowed to bubble up.
-        """
-        return self.project_repository.create(name=name, description=description)
+        """Create a new project with validation and business rules."""
+        return self._service.create_project(name, description)
 
     def list_projects(self) -> List[Project]:
-        """Return all projects.
-
-        Delegates to `ProjectRepository.get_all()`.
-        """
-        return self.project_repository.get_all()
+        """Return all projects."""
+        return self._service.list_projects()
 
     def get_project(self, project_id: int) -> Project:
-        """Fetch a project by ID.
-
-        Raises `ProjectNotFoundError` if no project exists with the given ID.
-        """
-        project = self.project_repository.get_by_id(project_id)
-        if project is None:
-            raise ProjectNotFoundError(f"Project with ID {project_id} not found.")
-        return project
+        """Fetch a project by ID or raise if missing."""
+        return self._service.get_project(project_id)
 
     def edit_project(self, project_id: int, new_name: str, new_description: str) -> Project:
-        """Update a project's name and description.
-
-        Delegates to `ProjectRepository.update()` which performs validation
-        and uniqueness checks.
-        """
-        return self.project_repository.update(project_id, new_name, new_description)
+        """Update a project's name and description."""
+        return self._service.edit_project(project_id, new_name, new_description)
 
     def delete_project(self, project_id: int) -> None:
-        """Delete a project by ID.
-
-        Delegates to `ProjectRepository.delete()`.
-        """
-        self.project_repository.delete(project_id)
+        """Delete a project by ID."""
+        self._service.delete_project(project_id)

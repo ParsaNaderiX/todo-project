@@ -1,7 +1,7 @@
 """Repository for Project entity database operations.
 
-This module implements the Repository Pattern for Project entity,
-handling all database operations with proper error handling and validation.
+This module encapsulates persistence and database error handling for projects.
+Business validation and rules are handled by the service layer.
 """
 
 from typing import List, Optional
@@ -10,15 +10,9 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.config import MAX_NUMBER_OF_PROJECT
-from app.core.validation import (
-    validate_project_description,
-    validate_project_name,
-)
 from app.exceptions.repository_exceptions import DatabaseOperationError
 from app.exceptions.service_exceptions import (
     DuplicateProjectError,
-    ProjectLimitError,
     ProjectNotFoundError,
 )
 from app.models.project import Project
@@ -26,12 +20,9 @@ from app.models.project import Project
 
 class ProjectRepository:
     """Repository for Project entity database operations.
-    
-    This class handles all database operations for the Project entity,
-    including CRUD operations, validation, and error handling.
-    
-    Attributes:
-        db: SQLAlchemy database session
+
+    This class handles CRUD operations and maps database errors to domain
+    exceptions. Business rules and validation belong in the service layer.
     """
     
     def __init__(self, db: Session) -> None:
@@ -45,13 +36,6 @@ class ProjectRepository:
     def create(self, name: str, description: str) -> Project:
         """Create and save a new project.
         
-        This method:
-        - Validates the project name and description
-        - Checks if project limit has been reached
-        - Checks for duplicate project names
-        - Creates and saves the project to the database
-        - Handles database constraint violations
-        
         Args:
             name: Project name
             description: Project description
@@ -59,30 +43,7 @@ class ProjectRepository:
         Returns:
             The created Project ORM model instance
             
-        Raises:
-            ValidationError: If name or description validation fails
-            ProjectLimitError: If maximum number of projects has been reached
-            DuplicateProjectError: If a project with the same name already exists
-            DatabaseOperationError: If database operation fails
         """
-        # Validate input
-        validate_project_name(name)
-        validate_project_description(description)
-        
-        # Check project limit
-        count_stmt = select(func.count(Project.id))
-        project_count = self.db.scalar(count_stmt) or 0
-        
-        if project_count >= MAX_NUMBER_OF_PROJECT:
-            raise ProjectLimitError(
-                f"Cannot create more than {MAX_NUMBER_OF_PROJECT} projects."
-            )
-        
-        # Check for duplicate name
-        if self.exists_by_name(name):
-            raise DuplicateProjectError(f"Project '{name}' already exists.")
-        
-        # Create new project
         project = Project(name=name, description=description)
         
         try:
@@ -134,12 +95,6 @@ class ProjectRepository:
     def update(self, project_id: int, name: str, description: str) -> Project:
         """Update an existing project.
         
-        This method:
-        - Validates the new project data
-        - Checks for duplicate names (excluding current project)
-        - Updates the project in the database
-        - Handles database constraint violations
-        
         Args:
             project_id: The ID of the project to update
             name: New project name
@@ -148,24 +103,11 @@ class ProjectRepository:
         Returns:
             The updated Project ORM model instance
             
-        Raises:
-            ValidationError: If name or description validation fails
-            ProjectNotFoundError: If project with given ID does not exist
-            DuplicateProjectError: If a project with the same name already exists
-            DatabaseOperationError: If database operation fails
         """
-        # Validate input
-        validate_project_name(name)
-        validate_project_description(description)
-        
         # Fetch project
         project = self.get_by_id(project_id)
         if project is None:
             raise ProjectNotFoundError(f"Project with ID {project_id} not found.")
-        
-        # Check for duplicate name (excluding current project)
-        if self.exists_by_name(name, exclude_id=project_id):
-            raise DuplicateProjectError(f"Project '{name}' already exists.")
         
         # Update project
         project.name = name
@@ -234,3 +176,10 @@ class ProjectRepository:
         except Exception as e:
             raise DatabaseOperationError(f"Failed to check project name existence: {e}") from e
 
+    def count(self) -> int:
+        """Return the total number of projects."""
+        try:
+            stmt = select(func.count(Project.id))
+            return int(self.db.scalar(stmt) or 0)
+        except Exception as e:
+            raise DatabaseOperationError(f"Failed to count projects: {e}") from e

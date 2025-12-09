@@ -63,8 +63,8 @@ def main():
         project_repo = ProjectRepository(db)
         task_repo = TaskRepository(db)
 
-        project_service = ProjectService(project_repo)
-        task_service = TaskService(task_repo)
+        project_service = ProjectService(project_repo, task_repo)
+        task_service = TaskService(project_repo, task_repo)
 
         display_welcome()
 
