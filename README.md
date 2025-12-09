@@ -344,6 +344,122 @@ Starting from a basic CLI application, the codebase was improved by:
 
 ---
 
+## Phase 2 - Part 2: Scheduled Tasks
+
+This part adds scheduled maintenance to the application so routine tasks
+are handled automatically without manual intervention.
+
+### What's New
+- Automatic closure of overdue tasks
+- Configurable scheduling using the `schedule` library
+- Dry-run mode for safe testing (shows what would be closed)
+- Status monitoring command to inspect overdue tasks
+- Comprehensive logging for audit and troubleshooting
+
+### New Commands
+
+Auto-close overdue tasks (manual execution):
+```bash
+poetry run python -m app.commands.autoclose_overdue
+poetry run python -m app.commands.autoclose_overdue --dry-run  # Test mode
+```
+
+Check overdue task status:
+```bash
+poetry run python -m app.commands.status
+```
+
+Run scheduler (continuous background process):
+```bash
+poetry run python -m app.commands.scheduler
+```
+
+### Configuration
+
+Environment variables (add to your `.env` for local development):
+```env
+# How often to check for overdue tasks (in minutes)
+SCHEDULER_INTERVAL_MINUTES=15
+```
+
+By default the scheduler runs every 15 minutes; adjust `SCHEDULER_INTERVAL_MINUTES`
+to increase or decrease the frequency.
+
+### How It Works
+- A task is considered "overdue" when: `deadline < today` AND `status != 'done'`.
+- When an overdue task is closed automatically the system:
+    - sets `status` → `done`
+    - sets `closed_at` → current timestamp
+- The scheduler runs at the configured interval (default 15 minutes) and
+    invokes the auto-close routine. Each run is logged to `logs/scheduler.log`.
+
+### Running in Production
+
+Development
+- Run the scheduler directly while developing:
+```bash
+poetry run python -m app.commands.scheduler
+```
+
+Production
+- Recommended: run the scheduler under a process manager (systemd, supervisor,
+    or container orchestration) so it restarts on failure and logs are captured.
+- Alternative: run via a cron job that executes the auto-close command at fixed
+    intervals.
+
+Example `systemd` service unit (save as `/etc/systemd/system/todo-scheduler.service`):
+```ini
+[Unit]
+Description=Todo Project Scheduler
+After=network.target
+
+[Service]
+Type=simple
+User=todo_user
+WorkingDirectory=/path/to/todo-project
+ExecStart=/usr/bin/env poetry run python -m app.commands.scheduler
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+After creating the unit file:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now todo-scheduler.service
+```
+
+### Testing
+
+Quick testing workflow:
+```bash
+# 1. Create test tasks with past deadlines using the CLI
+poetry run python -m app.cli
+
+# 2. Check overdue status (status command)
+poetry run python -m app.commands.status
+
+# 3. Test dry-run (safe, does not commit changes)
+poetry run python -m app.commands.autoclose_overdue --dry-run
+
+# 4. Actually close them
+poetry run python -m app.commands.autoclose_overdue
+
+# 5. Verify in database
+docker exec -it todo-postgres psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c "SELECT name, status, closed_at FROM tasks;"
+```
+
+### Troubleshooting
+- Scheduler not running → Check `logs/scheduler.log` and your process manager
+    (systemd, supervisor) for failures.
+- Tasks not closing → Verify task deadlines are valid `YYYY-MM-DD` dates and
+    that the database connection (`DATABASE_URL`) is correct.
+- Database connection errors → Ensure the DB is running and `DATABASE_URL`
+    matches the running DB credentials.
+
+---
+
 ## Version History
 
 - **v0.1.0** (Current) - Phase 1: CLI Application with In-Memory Storage
