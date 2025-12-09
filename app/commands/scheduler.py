@@ -1,6 +1,6 @@
 """Simple scheduler to run maintenance commands periodically.
 
-Uses the `schedule` library to run `autoclose_overdue_tasks` every 15 minutes.
+Uses the `schedule` library to run `autoclose_overdue_tasks` every minute.
 
 Run with:
     python -m app.commands.scheduler

@@ -4,7 +4,7 @@ Usage:
     python -m app.commands.autoclose_overdue
 
 This command will mark tasks whose deadline is before today and are not
-already marked as `done` as `done`, set their `closed_at` timestamp, and
+already marked as `done`, set their `closed_at` timestamp, and
 persist the changes.
 """
 from datetime import datetime, timezone
