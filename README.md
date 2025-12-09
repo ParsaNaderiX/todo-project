@@ -604,6 +604,38 @@ Database
 
 The API layer is a thin adapter that depends on the service layer via dependency injection.
 
+## Phase 4: Postman API Testing
+
+### Overview
+Complete Postman collection and environment to exercise the FastAPI application end-to-end.
+
+### Setup Instructions
+1. Import `postman_collection.json` (ToDoList_API_Phase4).
+2. Import `postman_environment.json` (ToDoList_Environment).
+3. Select the "Local Development" environment.
+4. Ensure the FastAPI server is running at `http://127.0.0.1:8000`.
+
+### Endpoints Tested
+**Projects**
+- GET /api/v1/projects
+- GET /api/v1/projects/{id}
+- POST /api/v1/projects
+- PUT /api/v1/projects/{id}
+- DELETE /api/v1/projects/{id}
+
+**Tasks**
+- GET /api/v1/projects/{project_id}/tasks
+- GET /api/v1/projects/{project_id}/tasks/{task_id}
+- POST /api/v1/projects/{project_id}/tasks
+- PUT /api/v1/projects/{project_id}/tasks/{task_id}
+- PATCH /api/v1/projects/{project_id}/tasks/{task_id}/status
+- DELETE /api/v1/projects/{project_id}/tasks/{task_id}
+
+### Testing Notes
+- All endpoints return appropriate HTTP status codes.
+- Request/response bodies follow RESTful conventions.
+- Validation errors surface as structured error responses.
+
 ### Database Operations
 - Run migrations:
 ```bash
