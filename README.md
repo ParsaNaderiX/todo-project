@@ -1,5 +1,7 @@
 # Todo Project - Phase 1: CLI Application
 
+> **DEPRECATION NOTICE**: The CLI is deprecated. Please use the REST API exposed at `/api/v1`. See "Running the API" below.
+
 A modular To-Do application built with clean architecture principles. This semester-long Software Engineering project demonstrates professional software development practices in Python.
 
 ## Overview
@@ -14,6 +16,55 @@ All development phases will be tracked in this repository:
 - **Phase 2**: Database Integration
 - **Phase 3**: REST API
 - **Phase 4**: Web Interface
+
+## Running the API
+
+- Start the server: `python run_api.py`
+- Base URL: `http://localhost:8000`
+- Interactive docs: `http://localhost:8000/docs`
+- Alternative docs: `http://localhost:8000/redoc`
+
+## API Endpoints
+
+Projects:
+- `POST /api/v1/projects` — Create project (201)
+- `GET /api/v1/projects` — List projects (supports `skip`, `limit`)
+- `GET /api/v1/projects/{project_id}` — Get project (200/404)
+- `PUT /api/v1/projects/{project_id}` — Update project (200/404)
+- `DELETE /api/v1/projects/{project_id}` — Delete project (204/404)
+
+Tasks:
+- `POST /api/v1/projects/{project_id}/tasks` — Create task (201)
+- `GET /api/v1/projects/{project_id}/tasks` — List tasks
+- `GET /api/v1/projects/{project_id}/tasks/{task_id}` — Get task
+- `PUT /api/v1/projects/{project_id}/tasks/{task_id}` — Update task
+- `PATCH /api/v1/projects/{project_id}/tasks/{task_id}/status` — Update status only
+- `DELETE /api/v1/projects/{project_id}/tasks/{task_id}` — Delete task
+
+### API Usage Examples
+
+Create a project (curl):
+```bash
+curl -X POST http://localhost:8000/api/v1/projects \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Marketing Website", "description": "Launch tasks"}'
+```
+
+Create a task in a project (curl):
+```bash
+curl -X POST http://localhost:8000/api/v1/projects/1/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Write landing copy", "status": "todo", "deadline": "2025-12-31"}'
+```
+
+Fetch tasks (Python requests):
+```python
+import requests
+
+resp = requests.get("http://localhost:8000/api/v1/projects/1/tasks")
+resp.raise_for_status()
+print(resp.json())
+```
 
 ## Current Features
 
@@ -462,7 +513,9 @@ docker exec -it todo-postgres psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c "SEL
 
 ## Version History
 
-- **v0.1.0** (Current) - Phase 1: CLI Application with In-Memory Storage
+- **v0.3.0 (Current)** - Phase 3: FastAPI REST API, versioned routing, global error handling
+- **v0.2.0** - Phase 2: Database integration, repository pattern, Alembic migrations
+- **v0.1.0** - Phase 1: CLI application with in-memory storage
   - Full CRUD operations for projects and tasks
   - Comprehensive validation and error handling
   - Clean architecture implementation
@@ -533,6 +586,23 @@ CLI Layer → Service Layer → Repository Layer → Database Layer
 Each layer has a single responsibility: the service layer calls repositories
 instead of directly manipulating storage, which improves testability and
 separation of concerns.
+
+### Phase 3 Architecture (with API)
+
+```
+API (FastAPI controllers)
+        │
+        ▼
+Service Layer (business rules, validation)
+        │
+        ▼
+Repository Layer (SQLAlchemy)
+        │
+        ▼
+Database
+```
+
+The API layer is a thin adapter that depends on the service layer via dependency injection.
 
 ### Database Operations
 - Run migrations:
