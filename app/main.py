@@ -88,6 +88,12 @@ async def handle_db_error(request: Request, exc: DatabaseOperationError) -> JSON
     return JSONResponse(status_code=500, content=payload.model_dump())
 
 
+@app.exception_handler(Exception)
+async def handle_generic_error(request: Request, exc: Exception) -> JSONResponse:  # noqa: ARG001
+    payload = ErrorResponse(detail=str(exc), error_type=exc.__class__.__name__)
+    return JSONResponse(status_code=500, content=payload.model_dump())
+
+
 @app.get("/", summary="API Info")
 async def root() -> dict:
     return {
