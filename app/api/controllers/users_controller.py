@@ -34,7 +34,9 @@ from app.exceptions import (
 from app.repositories import ProjectRepository, TaskRepository
 from app.services import TodoService
 
-router = APIRouter(prefix="/api/v1", tags=["projects", "tasks"])
+# Separate routers so main configuration can tag them independently
+project_router = APIRouter()
+task_router = APIRouter()
 
 
 def get_todo_service(db: Session = Depends(get_db)) -> TodoService:
@@ -60,7 +62,7 @@ def _error_response(exc: Exception, default_status: int = status.HTTP_500_INTERN
     return JSONResponse(status_code=status_code, content=payload.model_dump())
 
 
-@router.post(
+@project_router.post(
     "/projects",
     response_model=ProjectResponse,
     status_code=status.HTTP_201_CREATED,
@@ -78,7 +80,7 @@ async def create_project(
         return _error_response(exc)
 
 
-@router.get(
+@project_router.get(
     "/projects",
     response_model=ProjectListResponse,
     summary="List projects",
@@ -108,7 +110,7 @@ async def list_projects(
         return _error_response(exc)
 
 
-@router.get(
+@project_router.get(
     "/projects/{project_id}",
     response_model=ProjectResponse,
     summary="Get a project",
@@ -125,7 +127,7 @@ async def get_project(
         return _error_response(exc)
 
 
-@router.put(
+@project_router.put(
     "/projects/{project_id}",
     response_model=ProjectResponse,
     summary="Update a project",
@@ -146,7 +148,7 @@ async def update_project(
         return _error_response(exc)
 
 
-@router.delete(
+@project_router.delete(
     "/projects/{project_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
@@ -164,7 +166,7 @@ async def delete_project(
         return _error_response(exc)
 
 
-@router.post(
+@task_router.post(
     "/projects/{project_id}/tasks",
     response_model=TaskResponse,
     status_code=status.HTTP_201_CREATED,
@@ -190,7 +192,7 @@ async def create_task(
         return _error_response(exc)
 
 
-@router.get(
+@task_router.get(
     "/projects/{project_id}/tasks",
     response_model=List[TaskResponse],
     summary="List tasks in a project",
@@ -207,7 +209,7 @@ async def list_tasks(
         return _error_response(exc)
 
 
-@router.get(
+@task_router.get(
     "/projects/{project_id}/tasks/{task_id}",
     response_model=TaskResponse,
     summary="Get a task",
@@ -225,7 +227,7 @@ async def get_task(
         return _error_response(exc)
 
 
-@router.put(
+@task_router.put(
     "/projects/{project_id}/tasks/{task_id}",
     response_model=TaskResponse,
     summary="Update a task",
@@ -259,7 +261,7 @@ async def update_task(
         return _error_response(exc)
 
 
-@router.patch(
+@task_router.patch(
     "/projects/{project_id}/tasks/{task_id}/status",
     response_model=TaskResponse,
     summary="Update task status",
@@ -278,7 +280,7 @@ async def update_task_status(
         return _error_response(exc)
 
 
-@router.delete(
+@task_router.delete(
     "/projects/{project_id}/tasks/{task_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,
